@@ -44,6 +44,7 @@ class StaticConnectionPool extends AbstractConnectionPool implements ConnectionP
       }
 
       if ($this->readyToRevive($connection) === true) {
+        // 考虑继续使用的Connection需要再ping一次, 确保可靠
         if ($connection->ping() === true) {
           return $connection;
         }
@@ -62,6 +63,7 @@ class StaticConnectionPool extends AbstractConnectionPool implements ConnectionP
     throw new NoNodesAvailableException("No alive nodes found in your cluster");
   }
 
+  // scheduleCheck时, 标记dead(?)
   public function scheduleCheck() {
     foreach ($this->connections as $connection) {
       $connection->markDead();

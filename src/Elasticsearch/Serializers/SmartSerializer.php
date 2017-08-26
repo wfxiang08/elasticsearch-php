@@ -2,6 +2,7 @@
 
 namespace Elasticsearch\Serializers;
 
+use Elasticsearch\Common\Exceptions\RuntimeException;
 use Elasticsearch\Common\Exceptions\Serializer\JsonErrorException;
 
 /**
@@ -25,10 +26,13 @@ class SmartSerializer implements SerializerInterface {
     if (is_string($data) === true) {
       return $data;
     } else {
+      // 序列化失败, 直接报错
       $data = json_encode($data, JSON_PRESERVE_ZERO_FRACTION);
       if ($data === false) {
         throw new RuntimeException("Failed to JSON encode: ".json_last_error());
       }
+
+      // 特殊数据的特殊处理
       if ($data === '[]') {
         return '{}';
       } else {
@@ -74,6 +78,7 @@ class SmartSerializer implements SerializerInterface {
       return "";
     }
 
+    // 如何decode_json, 并且处理各种Error/Warning?
     $result = @json_decode($data, true);
 
     // Throw exception only if E_NOTICE is on to maintain backwards-compatibility on systems that silently ignore E_NOTICEs.

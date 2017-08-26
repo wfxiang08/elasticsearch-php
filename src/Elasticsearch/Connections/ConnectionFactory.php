@@ -53,6 +53,7 @@ class ConnectionFactory implements ConnectionFactoryInterface {
    * @return ConnectionInterface
    */
   public function create($hostDetails) {
+    // 根据host构建一个连接
     return new Connection(
       $this->handler,
       $hostDetails,

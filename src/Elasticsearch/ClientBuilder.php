@@ -59,7 +59,7 @@ class ClientBuilder {
   /** @var  string */
   private $serializer = '\Elasticsearch\Serializers\SmartSerializer';
 
-  /** @var  string */
+  /** @var  string 默认也是RoundRobin选择 */
   private $selector = '\Elasticsearch\ConnectionPool\Selectors\RoundRobinSelector';
 
   /** @var  array */
@@ -409,32 +409,6 @@ class ClientBuilder {
       $this->handler = ClientBuilder::defaultHandler();
     }
 
-    $sslOptions = null;
-    if (isset($this->sslKey)) {
-      $sslOptions['ssl_key'] = $this->sslKey;
-    }
-    if (isset($this->sslCert)) {
-      $sslOptions['cert'] = $this->sslCert;
-    }
-    if (isset($this->sslVerification)) {
-      $sslOptions['verify'] = $this->sslVerification;
-    }
-
-    if (!is_null($sslOptions)) {
-      $sslHandler = function (callable $handler, array $sslOptions) {
-        return function (array $request) use ($handler, $sslOptions) {
-          // Add our custom headers
-          foreach ($sslOptions as $key => $value) {
-            $request['client'][$key] = $value;
-          }
-
-          // Send the request using the handler and return the response.
-          return $handler($request);
-        };
-      };
-      $this->handler = $sslHandler($this->handler, $sslOptions);
-    }
-
     if (is_null($this->serializer)) {
       $this->serializer = new SmartSerializer();
     } elseif (is_string($this->serializer)) {
@@ -465,11 +439,18 @@ class ClientBuilder {
       $this->connectionFactory = new ConnectionFactory($this->handler, $this->connectionParams, $this->serializer, $this->logger, $this->tracer);
     }
 
+//    'search_es' => [
+//      'class' => 'common\components\ElasticsearchConnection',
+//      'hosts' => [
+//        'http://xxxx:80',
+//      ],
+//    ],
     if (is_null($this->hosts)) {
       $this->hosts = $this->getDefaultHost();
     }
 
     if (is_null($this->selector)) {
+      // 默认是RoundRobin选择可用的Connection
       $this->selector = new Selectors\RoundRobinSelector();
     } elseif (is_string($this->selector)) {
       $this->selector = new $this->selector;
@@ -519,9 +500,12 @@ class ClientBuilder {
     }
   }
 
+  // 如何处理Connections呢?
+  //
   private function buildTransport() {
     $connections = $this->buildConnectionsFromHosts($this->hosts);
 
+    // 如何构建Pool呢?
     if (is_string($this->connectionPool)) {
       $this->connectionPool = new $this->connectionPool(
         $connections,
@@ -536,6 +520,7 @@ class ClientBuilder {
         $this->connectionPoolArgs);
     }
 
+    // 有N个连接就 retries N次
     if (is_null($this->retries)) {
       $this->retries = count($connections);
     }
@@ -577,14 +562,22 @@ class ClientBuilder {
     $connections = [];
     foreach ($hosts as $host) {
       if (is_string($host)) {
+        // 如果是字符串, 则必须有schema, 例如: https
         $host = $this->prependMissingScheme($host);
+        // 必须显示指定端口, 例如: http://xxxx:80, 如果指定端口, 则默认为 9200, 这里可能存在风险
         $host = $this->extractURIParts($host);
       } else if (is_array($host)) {
+        // host可能是一个array:
+        //  schema => "http",
+        //  host => "aws.com"
+        //  port => 80
         $host = $this->normalizeExtendedHost($host);
       } else {
         $this->logger->error("Could not parse host: ".print_r($host, true));
         throw new RuntimeException("Could not parse host: ".print_r($host, true));
       }
+
+      // 标准化的host如何转换成为connection呢?
       $connections[] = $this->connectionFactory->create($host);
     }
 

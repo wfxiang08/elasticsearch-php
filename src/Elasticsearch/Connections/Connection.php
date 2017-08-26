@@ -414,6 +414,7 @@ class Connection implements ConnectionInterface {
         'verbose' => true
       ]
     ];
+    // 通过http head协议来检查是否活着
     try {
       $response = $this->performRequest('HEAD', '/', null, null, $options);
       $response = $response->wait();

@@ -54,6 +54,8 @@ abstract class AbstractConnectionPool implements ConnectionPoolInterface {
    * @param array $connectionPoolParams
    */
   public function __construct($connections, SelectorInterface $selector, ConnectionFactoryInterface $factory, $connectionPoolParams) {
+
+    // 确保所有的参数存在,并且有效
     $paramList = array('connections', 'selector', 'connectionPoolParams');
     foreach ($paramList as $param) {
       if (isset($$param) === false) {
@@ -61,6 +63,8 @@ abstract class AbstractConnectionPool implements ConnectionPoolInterface {
       }
     }
 
+    // 将connections随机化
+    // 我们现在只有一个connection
     if (isset($connectionPoolParams['randomizeHosts']) === true
       && $connectionPoolParams['randomizeHosts'] === true
     ) {

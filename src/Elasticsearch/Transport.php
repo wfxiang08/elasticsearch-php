@@ -83,6 +83,7 @@ class Transport {
    */
   public function performRequest($method, $uri, $params = null, $body = null, $options = []) {
     try {
+      // 获取Connection失败
       $connection = $this->getConnection();
     } catch (Exceptions\NoNodesAvailableException $exception) {
       $this->log->critical('No alive nodes found in cluster');

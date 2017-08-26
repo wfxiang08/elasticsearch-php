@@ -11,12 +11,12 @@ class StaticNoPingConnectionPool extends AbstractConnectionPool implements Conne
   /**
    * @var int
    */
-  private $pingTimeout = 60;
+  private $pingTimeout = 60; // 60s???
 
   /**
    * @var int
    */
-  private $maxPingTimeout = 3600;
+  private $maxPingTimeout = 3600; // 似乎太大了
 
   /**
    * {@inheritdoc}
@@ -33,13 +33,24 @@ class StaticNoPingConnectionPool extends AbstractConnectionPool implements Conne
    */
   public function nextConnection($force = false) {
     $total = count($this->connections);
+
+    //
+    // 假定我们现在只有一个connection
+    //    NoNodesAvailableException
+    //    需要关注: isAlive 或者 readyToRevive
     while ($total--) {
       /** @var Connection $connection */
+
+      // 选择一个Connections
       $connection = $this->selector->select($this->connections);
+
+      // 判断是否alive
       if ($connection->isAlive() === true) {
         return $connection;
       }
 
+      // 该connection现在可以一试
+      // 1. ping没有过期
       if ($this->readyToRevive($connection) === true) {
         return $connection;
       }

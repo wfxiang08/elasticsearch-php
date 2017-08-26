@@ -24,12 +24,14 @@ use Elasticsearch\Namespaces\TasksNamespace;
 /**
  * Class Client
  *
+ *
  * @category Elasticsearch
  * @package  Elasticsearch
  * @author   Zachary Tong <zach@elastic.co>
  * @license  http://www.apache.org/licenses/LICENSE-2.0 Apache2
  * @link     http://elastic.co
  */
+// API入口
 class Client {
   /**
    * @var Transport
@@ -143,6 +145,7 @@ class Client {
     } catch (TransportException $exception) {
       return false;
     } catch (NoNodesAvailableException $exception) {
+      // ping失败了
       return false;
     }
 
@@ -910,6 +913,10 @@ class Client {
    * @return array
    */
   public function search($params = array()) {
+    // 如何执行搜索逻辑呢?
+    // 在哪个index中搜索
+    // <index, type>
+    // 搜索内容: body
     $index = $this->extractArgument($params, 'index');
     $type = $this->extractArgument($params, 'type');
     $body = $this->extractArgument($params, 'body');
@@ -1479,11 +1486,13 @@ class Client {
    * @return null|mixed
    */
   public function extractArgument(&$params, $arg) {
+    // 数据格式的统一?
     if (is_object($params) === true) {
       $params = (array)$params;
     }
 
     if (array_key_exists($arg, $params) === true) {
+      // 抽取, unset
       $val = $params[$arg];
       unset($params[$arg]);
 

@@ -25,6 +25,7 @@ class ArrayToJSONSerializer implements SerializerInterface {
     if (is_string($data) === true) {
       return $data;
     } else {
+      // 除了字符串之外的其他都序列化
       $data = json_encode($data, JSON_PRESERVE_ZERO_FRACTION);
       if ($data === false) {
         throw new RuntimeException("Failed to JSON encode: ".json_last_error());

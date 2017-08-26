@@ -22,6 +22,7 @@ class EverythingToJSONSerializer implements SerializerInterface {
    * @return string
    */
   public function serialize($data) {
+    // 统一经过json处理
     $data = json_encode($data, JSON_PRESERVE_ZERO_FRACTION);
     if ($data === false) {
       throw new RuntimeException("Failed to JSON encode: ".json_last_error());
