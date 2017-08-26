@@ -165,12 +165,15 @@ class ClientBuilder {
     $future = null;
     if (extension_loaded('curl')) {
       $config = array_merge(['mh' => curl_multi_init()], $multiParams);
+
+      // 如何通过curl来做事情呢?
       if (function_exists('curl_reset')) {
         $default = new CurlHandler($singleParams);
         $future = new CurlMultiHandler($config);
       } else {
         $default = new CurlMultiHandler($config);
       }
+
     } else {
       throw new \RuntimeException('Elasticsearch-PHP requires cURL, or a custom HTTP handler.');
     }
@@ -449,6 +452,7 @@ class ClientBuilder {
       $this->hosts = $this->getDefaultHost();
     }
 
+    // 我们现在只有一个host, 因此: selector 不会有作用
     if (is_null($this->selector)) {
       // 默认是RoundRobin选择可用的Connection
       $this->selector = new Selectors\RoundRobinSelector();
@@ -461,6 +465,7 @@ class ClientBuilder {
     if (is_null($this->endpoint)) {
       $serializer = $this->serializer;
 
+      // 通过 serializer 来构建endpoint
       $this->endpoint = function ($class) use ($serializer) {
         $fullPath = '\\Elasticsearch\\Endpoints\\'.$class;
         if ($class === 'Bulk' || $class === 'Msearch' || $class === 'MsearchTemplate' || $class === 'MPercolate') {

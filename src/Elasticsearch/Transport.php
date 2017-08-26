@@ -52,6 +52,7 @@ class Transport {
     $this->connectionPool = $connectionPool;
     $this->retries = $retries;
 
+    // 默认为false
     if ($sniffOnStart === true) {
       $this->log->notice('Sniff on Start.');
       $this->connectionPool->scheduleCheck();
@@ -82,10 +83,11 @@ class Transport {
    * @return FutureArrayInterface
    */
   public function performRequest($method, $uri, $params = null, $body = null, $options = []) {
+    // 1. 获取Connection
     try {
-      // 获取Connection失败
       $connection = $this->getConnection();
     } catch (Exceptions\NoNodesAvailableException $exception) {
+      // 获取Connection失败
       $this->log->critical('No alive nodes found in cluster');
       throw $exception;
     }
@@ -94,6 +96,7 @@ class Transport {
     $caughtException = null;
     $this->lastConnection = $connection;
 
+    // 2. 执行Request呢?
     $future = $connection->performRequest(
       $method,
       $uri,
@@ -104,13 +107,15 @@ class Transport {
     );
 
     $future->promise()->then(
-    //onSuccess
       function ($response) {
+        //onSuccess
+        // 成功了, 则重置状态
         $this->retryAttempts = 0;
         // Note, this could be a 4xx or 5xx error
       },
-      //onFailure
       function ($response) {
+        //onFailure
+        // 失败了, 如果不是400之类的错误, 则标记尝试失败; 包括timeout
         // Ignore 400 level errors, as that means the server responded just fine
         if (!(isset($response['code']) && $response['code'] >= 400 && $response['code'] < 500)) {
           // Otherwise schedule a check

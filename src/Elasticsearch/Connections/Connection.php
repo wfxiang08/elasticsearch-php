@@ -130,6 +130,7 @@ class Connection implements ConnectionInterface {
     $this->connectionParams = $connectionParams;
     $this->serializer = $serializer;
 
+    // 对handler再次封装
     $this->handler = $this->wrapHandler($handler, $log, $trace);
   }
 
@@ -143,10 +144,12 @@ class Connection implements ConnectionInterface {
    * @return mixed
    */
   public function performRequest($method, $uri, $params = null, $body = null, $options = [], Transport $transport = null) {
+    // 1. 如何序列化Request?
     if (isset($body) === true) {
       $body = $this->serializer->serialize($body);
     }
 
+    // 2. 封装Request
     $request = [
       'http_method' => $method,
       'scheme' => $this->transportSchema,
@@ -164,6 +167,7 @@ class Connection implements ConnectionInterface {
       unset($request['client']);
     }
 
+    // 3. 通过handler来处理request
     $handler = $this->handler;
     $future = $handler($request, $this, $transport, $options);
 
@@ -181,6 +185,9 @@ class Connection implements ConnectionInterface {
   }
 
   private function wrapHandler(callable $handler, LoggerInterface $logger, LoggerInterface $tracer) {
+
+    // Handler接口:
+    // (array $request, Connection $connection, Transport $transport = null, $options)
     return function (array $request, Connection $connection, Transport $transport = null, $options) use ($handler, $logger, $tracer) {
 
       $this->lastRequest = [];

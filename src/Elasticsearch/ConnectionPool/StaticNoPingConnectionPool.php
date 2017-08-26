@@ -56,6 +56,13 @@ class StaticNoPingConnectionPool extends AbstractConnectionPool implements Conne
       }
     }
 
+    //
+    // 简化逻辑
+    // $connection
+    // $connection->isAlive()
+    // $this->readyToRevive($connection) !== true
+    // 然后就失败了
+    //
     throw new NoNodesAvailableException("No alive nodes found in your cluster");
   }
 

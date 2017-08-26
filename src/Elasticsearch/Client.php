@@ -925,6 +925,7 @@ class Client {
     $endpointBuilder = $this->endpoints;
 
     /** @var \Elasticsearch\Endpoints\Search $endpoint */
+    // endpoint概念??
     $endpoint = $endpointBuilder('Search');
     $endpoint->setIndex($index)
       ->setType($type)
